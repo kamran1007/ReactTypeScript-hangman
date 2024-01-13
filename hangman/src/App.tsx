@@ -5,19 +5,26 @@ import { Keyboard } from "./Keyboard";
 import { HangmanDrawing } from "./HangmanDrawing";
 import { keyboard } from "@testing-library/user-event/dist/keyboard";
 function App() {
-  const [wordToGuess, setWordToGuess] = useState(() => {
+  function getword() {
     return WordList[Math.floor(Math.random() * WordList.length)];
-  });
+  }
+
+  const [wordToGuess, setWordToGuess] = useState(getword);
   const [guessedLetters, setGuessedLetters] = useState<string[]>([]);
   const incorrectLetter = guessedLetters.filter(
     (letter) => !wordToGuess.includes(letter)
   );
+  const isLoser = incorrectLetter.length >= 6;
+  const isWinner = wordToGuess
+    .split("")
+    .every((letter) => guessedLetters.includes(letter));
+
   const addGuessedLetter = useCallback(
     (letter: string) => {
-      if (guessedLetters.includes(letter)) return;
+      if (guessedLetters.includes(letter) || isWinner || isLoser) return;
       setGuessedLetters((currentLetter) => [...currentLetter, letter]);
     },
-    [guessedLetters]
+    [guessedLetters, isWinner, isLoser]
   );
 
   useEffect(() => {
@@ -33,6 +40,20 @@ function App() {
       document.removeEventListener("keypress", handler);
     };
   }, [guessedLetters]);
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const key = e.key;
+      if (key !== "Enter") return;
+      e.preventDefault()
+      setGuessedLetters([])
+      setWordToGuess(getword());
+    };
+    document.addEventListener("keypress", handler);
+
+    return () => {
+      document.removeEventListener("keypress", handler);
+    };
+  }, []);
   console.log(wordToGuess);
   return (
     <div
@@ -46,13 +67,24 @@ function App() {
       }}
     >
       <div style={{ fontSize: "2rem", alignItems: "center" }}>
-        {" "}
-        win or Loose
+        {isWinner && "Winner! - Refresh to try again"}
+        {isLoser && "Nice Try - Refresh to try again"}
       </div>
       <HangmanDrawing numberOfGuesses={incorrectLetter.length} />
-      <HangmanWord guessedLetters={guessedLetters} wordToGuess={wordToGuess} />
+      <HangmanWord
+        reveal={isLoser}
+        guessedLetters={guessedLetters}
+        wordToGuess={wordToGuess}
+      />
       <div style={{ alignSelf: "stretch" }}>
-        <Keyboard />
+        <Keyboard
+          activeLeter={guessedLetters.filter((letter) =>
+            wordToGuess.includes(letter)
+          )}
+          inactiveLetters={incorrectLetter}
+          addGuessedLetter={addGuessedLetter}
+          disabled={isWinner || isLoser}
+        />
       </div>
     </div>
   );
