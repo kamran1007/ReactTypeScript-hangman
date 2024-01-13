@@ -1,5 +1,5 @@
-export  function Keyboard(){
-    const KEYS = [
+import styles from "./Keyboard.module.css"
+const KEYS = [
   "a",
   "b",
   "c",
@@ -27,6 +27,7 @@ export  function Keyboard(){
   "y",
   "z",
 ]
+export  function Keyboard(){
 
     return(
         <div
@@ -37,7 +38,8 @@ export  function Keyboard(){
         }}
         >
             {KEYS.map(key=> {
-                return <button key={key}>{key}</button>
+                return   <button className={styles.btn}   key={key}>{key.toUpperCase()}</button>
+
             })}
         </div>
     )
